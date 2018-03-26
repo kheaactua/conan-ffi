@@ -64,4 +64,11 @@ class FfiConan(ConanFile):
         self.env_info.PKG_CONFIG_LIBFFI_PREFIX = adjustPath(self.package_folder)
         appendPkgConfigPath(adjustPath(os.path.join(self.package_folder, 'lib', 'pkgconfig')), self.env_info)
 
+        # Populate the pkg-config environment variables
+        import site; site.addsitedir(self.deps_cpp_info['helpers'].rootpath) # Compensate for #2644
+        from platform_helpers import adjustPath, appendPkgConfigPath
+        self.env_info.PKG_CONFIG_FLANN_PREFIX = adjustPath(self.package_folder)
+        appendPkgConfigPath(adjustPath(os.path.join(self.package_folder, 'lib', 'pkgconfig')), self.env_info)
+
+
 # vim: ts=4 sw=4 expandtab ffs=unix ft=python foldmethod=marker :
