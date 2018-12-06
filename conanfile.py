@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, platform
+import os
 from conans import ConanFile, tools, AutoToolsBuildEnvironment
 from conans.errors import ConanException
 
@@ -20,8 +20,7 @@ class FfiConan(ConanFile):
     settings    = 'os', 'compiler', 'build_type', 'arch'
     requires    = 'helpers/[>= 0.3.0]@ntc/stable',
 
-    def system_requirements(self):
-
+    def build_requirements(self):
         pack_names = None
         if tools.os_info.linux_distro == 'ubuntu':
             pack_names = ['texinfo', 'autoconf', 'libtool']
@@ -38,21 +37,18 @@ class FfiConan(ConanFile):
                 installer.update() # Update the package database
                 installer.install(' '.join(pack_names)) # Install the package
             except ConanException:
-                self.output.warn('Could not install system requirements')
-
+                self.output.warn('Could not install build requirements')
 
     def source(self):
-        self.run(f"git clone https://github.com/libffi/libffi {self.name}")
-        self.run(f"cd {self.name} && git checkout v{self.version}")
+        g = tools.Git(folder=self.name)
+        g.clone('https://github.com/libffi/libffi', branch='v%s'%self.version)
 
     def build(self):
-        win_bash=(platform.system() == "Windows")
-
-        autotools = AutoToolsBuildEnvironment(self, win_bash=win_bash)
+        autotools = AutoToolsBuildEnvironment(self, win_bash=tools.os_info.is_windows)
 
         with tools.chdir(self.name):
-            self.run('./autogen.sh', win_bash=win_bash)
-            autotools.configure(args=[f'--prefix={self.package_folder}'])
+            self.run('./autogen.sh', win_bash=tools.os_info.is_windows)
+            autotools.configure(args=['--prefix=%s'%self.package_folder])
             autotools.make()
             autotools.make(args=['install'])
 
